@@ -1,7 +1,8 @@
 # growthpush
   
 GrowthPush API client library for Go.
-  
+
+## API Docs
 https://growthbeat.github.io/api/growthpush/v3/
 
 ## Installation
@@ -12,7 +13,7 @@ $ go get github.com/gotokatsuya/growthpush
 
 ## Usage
 
-```bash
+```go
 import (
     "github.com/gotokatsuya/growthpush/dispatcher"
     clientsSVC "github.com/gotokatsuya/growthpush/service/clients"
