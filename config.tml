@@ -1,3 +1,0 @@
-production     = false
-application_id = "hoge"
-secret_key     = "hoge"
