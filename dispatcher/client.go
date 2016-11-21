@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 )
 
 const (
@@ -56,10 +57,18 @@ func (c *Client) DispatchGetRequest(endpoint string, parameters map[string]strin
 		values.Set(key, param)
 	}
 
-	resp, err := http.Get(u.String() + "?" + values.Encode())
+	req, err := http.NewRequest("GET", u.String()+"?"+values.Encode(), nil)
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
 	defer resp.Body.Close()
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -67,7 +76,7 @@ func (c *Client) DispatchGetRequest(endpoint string, parameters map[string]strin
 	}
 	// Return error when status code less than 200 or equal more than 300
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("Dispatcher.Client.DispatchGetRequest: code:%d body:%s", resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("Dispatcher.Client.DispatchGetRequest endpoint:%s code:%d body:%s", endpoint, resp.StatusCode, string(respBody))
 	}
 	return respBody, nil
 }
@@ -88,17 +97,25 @@ func (c *Client) DispatchPostRequest(endpoint string, parameters map[string]stri
 		values.Set(key, param)
 	}
 
-	resp, err := http.PostForm(u.String(), values)
+	req, err := http.NewRequest("POST", u.String(), strings.NewReader(values.Encode()))
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
 	defer resp.Body.Close()
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("Dispatcher.Client.DispatchPostRequest: code:%d body:%s", resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("Dispatcher.Client.DispatchPostRequest endpoint:%s code:%d body:%s", endpoint, resp.StatusCode, string(respBody))
 	}
 	return respBody, nil
 }
