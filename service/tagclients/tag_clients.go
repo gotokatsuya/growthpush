@@ -1,23 +1,37 @@
 package tagclients
 
-import "github.com/gotokatsuya/growthpush/dispatcher"
+import (
+	"encoding/json"
 
-const endpointTagClients = "tags"
+	"github.com/gotokatsuya/growthpush/dispatcher"
+	"github.com/gotokatsuya/growthpush/util"
+)
 
-type CreateNewTagByDeviceTokenParameter struct {
-	Token string
-	Name  string
-	Value string
+const endpoint = "tag_clients"
+
+type CreateNewTagClientRequest struct {
+	ClientID string `json:"clientId"`
+	TagID    string `json:"tagId"`
+	Value    string `json:"value"`
 }
 
-func CreateNewTagByDeviceToken(client *dispatcher.Client, param CreateNewTagByDeviceTokenParameter) ([]byte, error) {
-	parameters := make(map[string]string)
-	parameters["token"] = param.Token
-	parameters["name"] = param.Name
-	parameters["value"] = param.Value
-	body, err := client.DispatchPostRequest(endpointTagClients, parameters)
+type CreateNewTagClientResponse struct {
+	TagID    json.Number `json:"tagId"`
+	ClientID json.Number `json:"clientId"`
+}
+
+func CreateNewTagClient(client *dispatcher.Client, req CreateNewTagClientRequest) (*CreateNewTagClientResponse, error) {
+	parameters, err := util.JSONToMapString(req)
 	if err != nil {
 		return nil, err
 	}
-	return body, nil
+	body, err := client.DispatchPostRequest(endpoint, parameters)
+	if err != nil {
+		return nil, err
+	}
+	resp := new(CreateNewTagClientResponse)
+	if err := json.Unmarshal(body, resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
 }

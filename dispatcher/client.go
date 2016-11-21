@@ -6,19 +6,17 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 )
 
 const (
 	defaultAPIBaseURL = "https://api.growthpush.com"
-	defaultAPIVersion = "3"
+	defaultAPIVersion = "4"
 )
 
 type (
 	RequiredParameter struct {
-		ApplicationID string
-		ClientID      string
-		CredentialID  string
+		ApplicationID string `json:"applicationId"`
+		CredentialID  string `json:"credentialId"`
 	}
 	Client struct {
 		HTTPClient *http.Client
@@ -29,50 +27,78 @@ type (
 	}
 )
 
-func NewClientWithParam(applicationID, clientID, credentialID string) *Client {
+func NewClientWithParam(applicationID, credentialID string) *Client {
 	return &Client{
 		HTTPClient: http.DefaultClient,
+
 		APIBaseURL: defaultAPIBaseURL,
 		APIVersion: defaultAPIVersion,
 		APIRequiredParameter: RequiredParameter{
 			ApplicationID: applicationID,
-			ClientID:      clientID,
 			CredentialID:  credentialID,
 		},
 	}
 }
 
+// DispatchGetRequest GrowthPushへのGETリクエスト
+func (c *Client) DispatchGetRequest(endpoint string, parameters map[string]string) ([]byte, error) {
+	u, err := url.Parse(c.APIBaseURL)
+	if err != nil {
+		return nil, err
+	}
+	u.Path = path.Join(c.APIVersion, endpoint)
+
+	values := url.Values{}
+	values.Set("applicationId", c.APIRequiredParameter.ApplicationID)
+	values.Set("credentialId", c.APIRequiredParameter.CredentialID)
+
+	for key, param := range parameters {
+		values.Set(key, param)
+	}
+
+	resp, err := http.Get(u.String() + "?" + values.Encode())
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	// Return error when status code less than 200 or equal more than 300
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("Dispatcher.Client.DispatchGetRequest: code:%d body:%s", resp.StatusCode, string(respBody))
+	}
+	return respBody, nil
+}
+
+// DispatchPostRequest GrowthPushへのPOSTリクエスト
 func (c *Client) DispatchPostRequest(endpoint string, parameters map[string]string) ([]byte, error) {
 	u, err := url.Parse(c.APIBaseURL)
 	if err != nil {
 		return nil, err
 	}
 	u.Path = path.Join(c.APIVersion, endpoint)
-	urlString := u.String()
 
 	values := url.Values{}
-	// Required parameters
 	values.Set("applicationId", c.APIRequiredParameter.ApplicationID)
-	values.Set("clientId", c.APIRequiredParameter.ClientID)
 	values.Set("credentialId", c.APIRequiredParameter.CredentialID)
 
-	// Optional parameters
 	for key, param := range parameters {
 		values.Set(key, param)
 	}
 
-	resp, err := c.HTTPClient.Post(urlString, "application/json", strings.NewReader(values.Encode()))
+	resp, err := http.PostForm(u.String(), values)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	// Return error when status code less than 200 or equal more than 300
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("StatusCode = %d, Message = %s ", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("Dispatcher.Client.DispatchPostRequest: code:%d body:%s", resp.StatusCode, string(respBody))
 	}
-	return body, nil
+	return respBody, nil
 }

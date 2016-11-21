@@ -3,7 +3,7 @@
 GrowthPush API client library for Go.
 
 ## API Docs
-https://growthbeat.github.io/api/growthpush/v3/
+https://growthbeat.github.io/api/growthpush/v4/
 
 ## Installation
 
@@ -16,30 +16,24 @@ $ go get github.com/gotokatsuya/growthpush
 ```go
 import (
     "github.com/gotokatsuya/growthpush/dispatcher"
-    clientsSVC "github.com/gotokatsuya/growthpush/service/clients"
+    "github.com/gotokatsuya/growthpush/service/events"
 )
 
-func CreateNewClient() error {
-    var (
-        applicationID = "xxx-xxx-xxx"
-        clientID      = "xxx-xxx-xxx"
-        credentialID  = "xxx-xxx-xxx"
-    )
-    client := dispatcher.NewClientWithParam(applicationID, clientID, credentialID)
+func CreateEvent(eventName string) error {
+	var (
+		applicationID = os.Getenv("GP_APPLICATION_ID")
+		credentialID  = os.Getenv("GP_CREDENTIAL_ID")
+	)
+	client := dispatcher.NewClientWithParam(applicationID, credentialID)
+	res, err := events.CreateNewEvent(client, events.CreateNewEventRequest{
+		Name: eventName,
+	})
+	if err != nil {
+		return err
+	}
     
-    var (
-        token       = "xxx-xxx-xxx" // device token
-        os          = "xxx-xxx-xxx" // [android, ios]
-        environment = "xxx-xxx-xxx" // [development, production]
-    )
-    _, err := clientsSVC.CreateNewClient(client, clientsSVC.CreateNewClientParameter{
-        Token: token,
-        OS: os,
-        Environment: environment,
-    })
-    if err != nil {
-        return err
-    }
+	log.Println(res)
+
     return nil
 }
 ```
