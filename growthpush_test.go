@@ -9,6 +9,7 @@ import (
 
 	"github.com/gotokatsuya/growthpush/dispatcher"
 	"github.com/gotokatsuya/growthpush/service/clients"
+	"github.com/gotokatsuya/growthpush/service/eventclients"
 	"github.com/gotokatsuya/growthpush/service/events"
 	"github.com/gotokatsuya/growthpush/service/tagclients"
 	"github.com/gotokatsuya/growthpush/service/tags"
@@ -87,7 +88,7 @@ func TestCreateTagClientFlow(t *testing.T) {
 	t.Log(newTagClientRes)
 }
 
-func TestCreateEventFlow(t *testing.T) {
+func TestCreateEventClientFlow(t *testing.T) {
 	var (
 		applicationID = os.Getenv("GP_APPLICATION_ID")
 		credentialID  = os.Getenv("GP_CREDENTIAL_ID")
@@ -100,5 +101,15 @@ func TestCreateEventFlow(t *testing.T) {
 		t.Fatal(newEventErr)
 	}
 
-	t.Log(newEventRes)
+	clientID := mustGetClientID(t, gpDispatcherClient)
+
+	newEventClientRes, newEventClientErr := eventclients.CreateNewEventClient(gpDispatcherClient, eventclients.CreateNewEventClientRequest{
+		ClientID: clientID,
+		EventID:  newEventRes.ID.String(),
+	})
+	if newEventClientErr != nil {
+		t.Fatal(newEventClientErr)
+	}
+
+	t.Log(newEventClientRes)
 }
