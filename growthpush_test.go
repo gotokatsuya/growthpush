@@ -139,3 +139,29 @@ func TestGetClients(t *testing.T) {
 		startID = res[size-1].ID.String()
 	}
 }
+
+func TestGetEvents(t *testing.T) {
+	var (
+		applicationID = os.Getenv("GP_APPLICATION_ID")
+		credentialID  = os.Getenv("GP_CREDENTIAL_ID")
+	)
+	gpDispatcherClient := dispatcher.NewClientWithParam(applicationID, credentialID)
+
+	var startID string
+	for index := 0; index <= 1; index++ {
+		req := events.GetEventsRequest{
+			Limit:            "5",
+			ExclusiveStartID: startID,
+		}
+		res, err := events.GetEvents(gpDispatcherClient, req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		size := len(res)
+		if size == 0 {
+			break
+		}
+		t.Log(res)
+		startID = res[size-1].ID.String()
+	}
+}
