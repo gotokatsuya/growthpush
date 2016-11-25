@@ -59,3 +59,40 @@ func GetClientByToken(client *dispatcher.Client, req GetClientByTokenRequest) (*
 	}
 	return resp, nil
 }
+
+type GetClientsRequest struct {
+	Limit            string `json:"limit"`
+	ExclusiveStartID string `json:"exclusiveStartId"`
+}
+
+type GetClientsResponse struct {
+	ID          json.Number `json:"id"`
+	Token       string      `json:"token"`
+	Status      string      `json:"status"`
+	OS          string      `json:"os"`
+	Environment string      `json:"environment"`
+}
+
+func (r GetClientsResponse) InvalidOrInactive() bool {
+	return r.Status == "invalid" || r.Status == "inactive"
+}
+
+func (r GetClientsResponse) Development() bool {
+	return r.Environment == "development"
+}
+
+func GetClients(client *dispatcher.Client, req GetClientsRequest) ([]GetClientsResponse, error) {
+	parameters, err := util.JSONToMapString(req)
+	if err != nil {
+		return nil, err
+	}
+	body, err := client.DispatchGetRequest(endpoint, parameters)
+	if err != nil {
+		return nil, err
+	}
+	var respList []GetClientsResponse
+	if err := json.Unmarshal(body, &respList); err != nil {
+		return nil, err
+	}
+	return respList, nil
+}

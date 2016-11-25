@@ -54,6 +54,9 @@ func ToMapString(in interface{}, tag string) (map[string]string, error) {
 		if !ok {
 			return nil, fmt.Errorf("ToMapString only accepts string interface; got %T", v.Field(i).Interface())
 		}
+		if strValue == "" {
+			continue
+		}
 		out[key] = strValue
 	}
 	return out, nil
