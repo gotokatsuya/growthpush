@@ -32,3 +32,29 @@ func CreateNewEvent(client *dispatcher.Client, req CreateNewEventRequest) (*Crea
 	}
 	return resp, nil
 }
+
+type GetEventsRequest struct {
+	Limit            string `json:"limit"`
+	ExclusiveStartID string `json:"exclusiveStartId"`
+}
+
+type GetEventsResponse struct {
+	ID   json.Number `json:"id"`
+	Name string      `json:"name"`
+}
+
+func GetEvents(client *dispatcher.Client, req GetEventsRequest) ([]GetEventsResponse, error) {
+	parameters, err := util.JSONToMapString(req)
+	if err != nil {
+		return nil, err
+	}
+	body, err := client.DispatchGetRequest(endpoint, parameters)
+	if err != nil {
+		return nil, err
+	}
+	var respList []GetEventsResponse
+	if err := json.Unmarshal(body, &respList); err != nil {
+		return nil, err
+	}
+	return respList, nil
+}
